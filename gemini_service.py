@@ -57,23 +57,29 @@ _______________________________________
 
 
 def processar_ata_multimodal(
-    api_key: str | None = None,
     bytes_imagem: bytes | None = None,
     bytes_audio: bytes | None = None,
     mime_audio: str = "audio/mp3",
 ) -> str:
-    """Gera uma ata executiva em Markdown a partir de imagem e/ou áudio."""
-    key = (api_key or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
-    if not key or key == "Cole_Sua_Chave_Aqui":
-        raise ValueError(
-            "A chave da API do Gemini é obrigatória. Forneça a chave ou configure GEMINI_API_KEY no arquivo .env."
-        )
+    """Gera uma ata formal em Markdown a partir de imagem e/ou áudio."""
 
+    # 1. Carregar a chave direto do .env (load_dotenv() já foi chamado no topo do módulo)
+    api_key = os.getenv("GEMINI_API_KEY")
+
+    # 2. Validar se a chave foi encontrada e é válida
+    if not api_key or not api_key.strip() or api_key.strip() == "Cole_Sua_Chave_Aqui":
+        raise ValueError("Chave GEMINI_API_KEY não foi encontrada no arquivo .env")
+
+    api_key = api_key.strip()
+
+    # 3. Validar que ao menos um arquivo foi fornecido
     if not bytes_imagem and not bytes_audio:
         raise ValueError("É necessário fornecer pelo menos uma foto das anotações ou o áudio da reunião.")
 
-    client = genai.Client(api_key=key)
+    # 4. Instanciar o cliente com a chave explícita
+    client = genai.Client(api_key=api_key)
 
+    # 5. Montar os conteúdos multimodais
     contents = [PROMPT_ATA_NOTARIAL]
 
     if bytes_imagem:
@@ -86,9 +92,43 @@ def processar_ata_multimodal(
             types.Part.from_bytes(data=bytes_audio, mime_type=mime_audio),
         )
 
-    response = client.models.generate_content(
-        model="gemini-1.5-flash",
-        contents=contents,
-    )
-    return response.text
+    # 6. Chamar a API com tratamento de erros granular
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=contents,
+        )
+        return response.text
+
+    except Exception as exc:
+        # Log completo do erro no terminal do servidor para diagnóstico
+        print(f"[ERRO GEMINI SERVICE]: {exc}")
+
+        erro_str = str(exc).lower()
+
+        # Erros de autenticação / chave inválida (401)
+        if any(t in erro_str for t in ("api key", "api_key", "unauthenticated", "invalid key",
+                                        "401", "permission denied", "api_key_invalid")):
+            raise ValueError(
+                "A chave de API do Gemini informada é inválida ou expirou. Verifique suas credenciais."
+            ) from exc
+
+        # Recurso/modelo não encontrado (404)
+        if any(t in erro_str for t in ("404", "not found", "model not found", "resource not found")):
+            raise ValueError(
+                "O serviço de inteligência artificial está temporariamente indisponível. Tente novamente em alguns instantes."
+            ) from exc
+
+        # Cota / limite de requisições (429)
+        if any(t in erro_str for t in ("429", "quota", "rate limit", "resource exhausted", "too many requests")):
+            raise ValueError(
+                "O limite de uso gratuito da API foi atingido temporariamente. Aguarde alguns instantes e tente novamente."
+            ) from exc
+
+        # Erro genérico/desconhecido
+        raise ValueError(
+            "Não foi possível processar os arquivos e gerar a ata. Verifique se o áudio/imagem está em um formato válido."
+        ) from exc
+
+
 

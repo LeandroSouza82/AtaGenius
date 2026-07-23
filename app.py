@@ -32,21 +32,13 @@ async def serve_index():
 
 @app.post("/api/gerar-ata")
 async def gerar_ata(
-    gemini_key: Optional[str] = Form(None, description="Chave de API do Google Gemini fornecida pelo usuário"),
     foto: Optional[UploadFile] = File(None, description="Foto manuscrita ou do quadro da reunião"),
     audio: Optional[UploadFile] = File(None, description="Gravação de áudio da reunião")
 ):
     """
-    Endpoint principal para recebimento dos arquivos e processamento via Gemini 1.5 Flash.
+    Endpoint principal para recebimento dos arquivos e processamento via Gemini 2.5 Flash.
+    A chave de API é carregada automaticamente do arquivo .env pelo gemini_service.
     """
-    # Obtenção da chave (formulário ou .env)
-    key_final = (gemini_key or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
-    if not key_final or key_final == "Cole_Sua_Chave_Aqui":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A chave da API do Gemini é obrigatória. Forneça no formulário ou configure GEMINI_API_KEY no .env."
-        )
-
     bytes_imagem: Optional[bytes] = None
     bytes_audio: Optional[bytes] = None
     mime_audio: str = "audio/mp3"
@@ -79,17 +71,20 @@ async def gerar_ata(
     # Invocação do Serviço Gemini
     try:
         ata_markdown = processar_ata_multimodal(
-            api_key=key_final,
             bytes_imagem=bytes_imagem,
             bytes_audio=bytes_audio,
             mime_audio=mime_audio
         )
     except ValueError as val_err:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(val_err))
+        # Mensagens amigáveis já formatadas pelo gemini_service
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err)
+        )
     except Exception as err:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Falha ao gerar a ata com a API do Gemini: {str(err)}"
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Não foi possível processar os arquivos e gerar a ata. Verifique se o áudio/imagem está em um formato válido."
         )
 
     # Persistência Opcional no Supabase (se configurado)

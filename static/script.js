@@ -1,9 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Referências aos elementos da interface
-    const geminiKeyInput = document.getElementById('geminiKey');
-    const btnToggleKey = document.getElementById('btnToggleKey');
-    
-    // Inputs e previews
+    // Inputs e previews de arquivos
     const inputFoto = document.getElementById('inputFoto');
     const dropzoneFoto = document.getElementById('dropzoneFoto');
     const previewFoto = document.getElementById('previewFoto');
@@ -27,13 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyText = document.getElementById('copyText');
 
     let ataGeradaTexto = '';
-
-    // Alternar visibilidade da chave de API
-    btnToggleKey.addEventListener('click', () => {
-        const isPassword = geminiKeyInput.type === 'password';
-        geminiKeyInput.type = isPassword ? 'text' : 'password';
-        btnToggleKey.textContent = isPassword ? '🙈' : '👁️';
-    });
 
     // Configuração dos eventos de Drag and Drop e File Selection
     setupFileHandler(inputFoto, dropzoneFoto, previewFoto, nomeFoto, btnRemoverFoto);
@@ -102,8 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Submissão e Chamada Assíncrona para a API
     btnGerar.addEventListener('click', async () => {
         ocultarErro();
-        
-        const key = geminiKeyInput.value.trim();
 
         const temFoto = inputFoto.files && inputFoto.files.length > 0;
         const temAudio = inputAudio.files && inputAudio.files.length > 0;
@@ -113,11 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Prepara o FormData para multipart/form-data
+        // Prepara o FormData com os arquivos (chave vem do .env do servidor)
         const formData = new FormData();
-        if (key) {
-            formData.append('gemini_key', key);
-        }
         if (temFoto) {
             formData.append('foto', inputFoto.files[0]);
         }
@@ -156,11 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function setLoadingState(isLoading) {
         if (isLoading) {
             btnGerar.disabled = true;
-            btnText.textContent = 'Processando com Gemini AI...';
+            btnText.textContent = 'Processando com AtaGenius AI...';
             spinner.style.display = 'inline-block';
         } else {
             btnGerar.disabled = false;
-            btnText.textContent = '⚡ Gerar Ata com Gemini 1.5 Flash';
+            btnText.textContent = '⚡ Gerar Ata com AtaGenius';
             spinner.style.display = 'none';
         }
     }
