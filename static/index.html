@@ -87,16 +87,24 @@
 
             <!-- Área de Exibição da Ata Gerada -->
             <section class="card result-card" id="resultCard" style="display: none;">
+
+                <!-- Cabeçalho do card -->
                 <div class="result-header">
                     <div>
                         <h2>Ata de Reunião Gerada</h2>
                         <span class="status-tag">Sucesso</span>
                     </div>
-                    <button id="btnCopiar" class="btn-secondary btn-copy">
-                        <span id="copyIcon">📋</span> <span id="copyText">Copiar Ata</span>
-                    </button>
                 </div>
-                
+
+                <!-- Barra de Ferramentas de Exportação -->
+                <div class="export-toolbar">
+                    <button id="btn-copiar"    class="export-btn">📋 Copiar Texto</button>
+                    <button id="btn-word"      class="export-btn">📄 Baixar em Word (.doc)</button>
+                    <button id="btn-imprimir"  class="export-btn">🖨️ Imprimir / Salvar PDF</button>
+                    <button id="btn-nova-ata"  class="export-btn export-btn--reset">🔄 Nova Ata</button>
+                </div>
+
+                <!-- Container da Ata — único elemento impresso -->
                 <div class="result-content" id="resultBody">
                     <!-- O conteúdo formatado em Markdown será inserido aqui via JS -->
                 </div>

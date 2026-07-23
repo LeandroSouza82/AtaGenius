@@ -95,14 +95,14 @@ def processar_ata_multimodal(
     # 6. Chamar a API com tratamento de erros granular
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash",
             contents=contents,
         )
         return response.text
 
     except Exception as exc:
         # Log completo do erro no terminal do servidor para diagnóstico
-        print(f"[ERRO GEMINI SERVICE]: {exc}")
+        print(f"[ERRO TÉCNICO GEMINI]: {exc}")
 
         erro_str = str(exc).lower()
 

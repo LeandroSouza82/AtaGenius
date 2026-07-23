@@ -6,8 +6,10 @@ from typing import Any
 
 try:
     from supabase import Client, create_client
-except ImportError:
+except Exception as _supabase_err:
+    print(f"[AVISO SUPABASE]: Falha ao importar SDK do Supabase ({_supabase_err})")
     Client = None
+    create_client = None  # type: ignore[assignment]
 
 
 class SupabaseService:
